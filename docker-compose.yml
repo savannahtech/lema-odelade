@@ -1,0 +1,59 @@
+version: "3"
+services:
+  app:
+    container_name: accessment_microservice_server
+    build: .
+    ports:
+      - 8085:8085
+    restart: unless-stopped
+    volumes:
+      - accessApp:/usr/src/app/
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: # Pass environment variables to the service
+      # PostgreSQL DB Connection
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: microsdata
+      POSTGRES_DB: micros_dev_db
+      PGUSER: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      # Git Access Token (this is required)
+      GITACCESSTOKEN: ""
+      OWNER: ""
+      REPONAME: ""
+    networks:
+      - microsnetwork
+    # dns:
+    #   - 8.8.8.8
+
+  postgres:
+    container_name: accessment_postgres_database
+    image: postgres:14.2
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: microsdata
+      POSTGRES_DB: micros_dev_db
+      PGUSER: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 80s  
+    networks:
+      - microsnetwork
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+volumes:
+  accessApp:
+  postgres:
+
+networks:
+  microsnetwork:
+    driver: bridge
